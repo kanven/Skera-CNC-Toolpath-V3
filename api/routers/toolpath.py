@@ -9,9 +9,13 @@ from starlette.concurrency import run_in_threadpool
 from api.toolpath_engine import evaluate_fileobj, evaluate_gcode
 from api.toolpath_engine.job_manager import get_job, register_source, start_job
 from api.toolpath_engine.rule_config import load_rule_config
+import logging
 
 
 router = APIRouter(prefix="/toolpath", tags=["toolpath"])
+
+# Module logger
+logger = logging.getLogger(__name__)
 
 
 class IssueV2(BaseModel):
@@ -207,6 +211,18 @@ async def evaluate_toolpath_job(
     sample_lines: int = Form(default=50000),
 ):
     try:
+        logger.info("evaluate_job_request", extra={
+            "file_provided": file is not None,
+            "file_id": file_id,
+            "gcode_text_present": bool(gcode_text and gcode_text.strip()),
+            "software_source": software_source,
+            "machine_model": machine_model,
+            "mode": mode,
+            "sample_lines": sample_lines,
+        })
+    except Exception:
+        logger.exception("failed to log evaluate_job request")
+    try:
         raw_cfg = load_rule_config()
         max_file_bytes = int((raw_cfg.get("analysis_limits", {}) or {}).get("max_file_bytes", 157286400))
     except Exception:
@@ -236,6 +252,10 @@ async def evaluate_toolpath_job(
             software_source=software_source,
             machine_model=machine_model,
         )
+        try:
+            logger.info("job_created", extra={"job_id": job_id, "file_id": src_file_id, "mode": mode_norm})
+        except Exception:
+            logger.exception("failed to log job creation for %s", job_id)
     except KeyError:
         raise HTTPException(status_code=404, detail="file_id 不存在或已过期") from None
 
