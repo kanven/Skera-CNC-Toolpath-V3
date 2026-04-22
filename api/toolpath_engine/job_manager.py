@@ -5,7 +5,8 @@ import tempfile
 import threading
 import time
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
+import logging
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -46,6 +47,9 @@ _JOBS: Dict[str, ToolpathJob] = {}
 
 _STORE_DIR = Path(tempfile.gettempdir()) / "skera_toolpath_jobs"
 _TTL_S = 24 * 3600
+
+# Module logger
+logger = logging.getLogger(__name__)
 
 
 def _ensure_store_dir() -> None:
@@ -131,6 +135,11 @@ def start_job(
     )
     with _LOCK:
         _JOBS[job_id] = job
+        try:
+            logger.info("job_registered", extra={"job_id": job_id, "job": asdict(job)})
+        except Exception:
+            # Logging should never break job registration
+            logger.exception("failed to log job registration for %s", job_id)
 
     t = threading.Thread(target=_run_job, args=(job_id,), daemon=True)
     t.start()
