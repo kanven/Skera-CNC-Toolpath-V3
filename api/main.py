@@ -1,4 +1,8 @@
 from pathlib import Path
+import logging
+import logging.config
+import tempfile
+import os
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
@@ -7,7 +11,42 @@ from api.routers import projects, ai
 from api.routers import a2ui
 from api.routers import toolpath
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 app = FastAPI(title="AICAM API", version="1.0.0")
+
+# Configure logging to file and console (log file placed in project root)
+try:
+    log_path = BASE_DIR / "skera_api.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    logging.config.dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": False,
+            "formatters": {
+                "default": {
+                    "format": "%(asctime)s %(levelname)s %(name)s %(message)s"
+                }
+            },
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "formatter": "default",
+                    "level": "INFO",
+                },
+                "file": {
+                    "class": "logging.FileHandler",
+                    "formatter": "default",
+                    "level": "INFO",
+                    "filename": str(log_path),
+                    "mode": "a",
+                },
+            },
+            "root": {"handlers": ["console", "file"], "level": "INFO"},
+        }
+    )
+except Exception:
+    logging.basicConfig(level=logging.INFO)
 
 app.add_middleware(
     CORSMiddleware,

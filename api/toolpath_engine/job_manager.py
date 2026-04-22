@@ -136,7 +136,7 @@ def start_job(
     with _LOCK:
         _JOBS[job_id] = job
         try:
-            logger.info("job_registered", extra={"job_id": job_id, "job": asdict(job)})
+            logger.info("job_registered job=%s", asdict(job))
         except Exception:
             # Logging should never break job registration
             logger.exception("failed to log job registration for %s", job_id)

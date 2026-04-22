@@ -211,15 +211,16 @@ async def evaluate_toolpath_job(
     sample_lines: int = Form(default=50000),
 ):
     try:
-        logger.info("evaluate_job_request", extra={
-            "file_provided": file is not None,
-            "file_id": file_id,
-            "gcode_text_present": bool(gcode_text and gcode_text.strip()),
-            "software_source": software_source,
-            "machine_model": machine_model,
-            "mode": mode,
-            "sample_lines": sample_lines,
-        })
+        logger.info(
+            "evaluate_job_request file_provided=%s file_id=%s gcode_present=%s software_source=%s machine_model=%s mode=%s sample_lines=%s",
+            file is not None,
+            file_id,
+            bool(gcode_text and gcode_text.strip()),
+            software_source,
+            machine_model,
+            mode,
+            sample_lines,
+        )
     except Exception:
         logger.exception("failed to log evaluate_job request")
     try:
@@ -253,7 +254,7 @@ async def evaluate_toolpath_job(
             machine_model=machine_model,
         )
         try:
-            logger.info("job_created", extra={"job_id": job_id, "file_id": src_file_id, "mode": mode_norm})
+            logger.info("job_created job_id=%s file_id=%s mode=%s", job_id, src_file_id, mode_norm)
         except Exception:
             logger.exception("failed to log job creation for %s", job_id)
     except KeyError:
